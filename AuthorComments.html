@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+
+
+    <script type="text/javascript" src="https://cdn.steemjs.com/lib/latest/steem.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
+
+    <script>
+
+        var localDiscussion = null;
+        var index = -1;
+
+        $(document).ready(function () {
+		steem.api.setWebSocket("wss://gtg.steem.house:8090");
+		GetAuhorPosts();
+
+		function GetAuhorPosts()
+		{
+         var author = $("#txtAuthor").val();
+                var query = {
+                    tag: author,
+                    limit: 50
+                };
+                $("#resultsContainter").empty();
+                localDiscussion = null;
+                index = -1
+                $("#selPosts").html("");
+                steem.api.getDiscussionsByBlog(query, function (err, discussions) {
+                    if (!err) {
+                        localDiscussion = discussions;
+                        $("#selPosts").append($("<option>Some Text</option>").val(-1).html("select"));
+                        for (i = 0; i <= discussions.length - 1; i++) {
+                            if (author == discussions[i].author)
+                                $("#selPosts").append($("<option>Some Text</option>").val(i).html(discussions[i].permlink));
+                        }
+                    }
+                    else {
+                        alert(err);
+                    }
+                });
+		}
+         
+		 $("#btnGetComments").click(function () {
+                 index = $("#selPosts").val();
+				//console.log(localDiscussion);
+				  var author = $("#txtAuthor").val();
+				  var permlink = localDiscussion[index].permlink;
+				  //console.log(permlink);
+				  steem.api.getContentReplies(author, permlink, function(err, result) {
+					//console.log(err, result);
+					if (!err)
+					{ 
+					//console.log("test");
+					var commentAuthors = [];
+					 for (i = 0; i <= result.length - 1; i++) {
+						//console.log(result[i]);
+						var commentAuthor = result[i].author;
+						item = {};
+						item ["author"] = commentAuthor;
+						item ["count"] = 1;
+						
+						var existing = false;
+						
+												
+						$.map(commentAuthors, function(elem, index) {
+						 if (elem.author == commentAuthor) 
+						 {
+							 elem.count = elem.count + 1;
+							 existing = true;
+							 }
+						});
+						if(existing==false)
+							commentAuthors.push(item);
+					 }
+					 var sortedCommentAuthors = sortByKey(commentAuthors,"count")
+					 var tableHtml = $.makeTable(sortedCommentAuthors);
+					console.log(sortedCommentAuthors);					
+					console.log(tableHtml);
+					$("#resultsTable").empty();
+					$("#resultsTable").append(tableHtml);
+					}
+					else
+					{ alert(err);}
+				});
+				
+            });
+        
+		
+		});
+
+		
+		function sortByKey(array, key) {
+			return array.sort(function(a, b) {
+			var x = a[key]; var y = b[key];
+			return ((x > y) ? -1 : ((x < y) ? 1 : 0));
+    });
+}
+
+$.makeTable = function (mydata) {
+   // var table = $('<table border=1>');
+    var tblHeader = "<tr>";
+    for (var k in mydata[0]) tblHeader += "<th>" + k + "</th>";
+    tblHeader += "</tr>";
+    //$(tblHeader).appendTo(table);
+	var tableHtml = '<table border=1>' + tblHeader;
+    $.each(mydata, function (index, value) {
+        var TableRow = "<tr>";
+        $.each(value, function (key, val) {
+            TableRow += "<td>" + val + "</td>";
+        });
+        TableRow += "</tr>";
+        //$(tableHtml).append(TableRow);
+		tableHtml = tableHtml + TableRow;
+    });
+    //return ($(table));
+	return tableHtml + '</table>';
+};
+
+        function capitaliseFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+    </script>
+</head>
+<body>
+    <hr />
+
+    <div class="expandablerVotes">
+        <div>
+            Author
+            <input type="text" id="txtAuthor" style="width: 150px;" value="greenman" />
+        </div>
+		<div>
+			Post Links: <select id="selPosts"></select>
+		</div>
+        <div>
+           <input id="btnGetComments" type="button" value="Get Comments Data" />
+        </div>
+    </div>
+	<div id="resultsTable">
+	</div>
+	
+	
+		
+</body>
+</html>
