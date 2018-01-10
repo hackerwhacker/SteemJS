@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+
+    <script src="https://cdn.steemjs.com/lib/latest/steem.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+            $("#btnSendSBD").click(function () {
+                var url = $("#txtSBDURL").val();
+                var permlink = url.substring(url.lastIndexOf("/")).replace("/","");
+
+                var authorStartIndex = url.lastIndexOf("@");
+                var authorEndIndex = url.lastIndexOf("/");
+                var author = url.substring(authorStartIndex + 1, authorEndIndex);
+
+                var from = $("#txtUser").val();
+                var wif = $("#txtActiveKey").val();
+    var ul = document.getElementById('result');
+
+     var amt = parseFloat($("#txtSBDAmount").val()).toFixed(3) + " SBD";
+
+
+                steem.api.getContent(author, permlink, function (err, result) {
+                    console.log(err, result);
+                    if (err != null)
+                    { alert(err); }
+                    else {
+       result.active_votes.map(function (active_vote) {
+         var to = active_vote.voter;
+          steem.broadcast.transfer(wif, from, to, amt, "", function (sendError, sendResult)
+          {
+          console.log(sendError, sendResult);
+          if (sendError != null)
+           {
+            console.log(sendError);
+            //alert(sendError);
+            var li = document.createElement('li');
+            li.innerHTML = active_vote.voter + ' ' + active_vote.percent/100 + '% Send SBD Error';
+            ul.appendChild(li);
+           }
+          else {
+           var li = document.createElement('li');
+           li.innerHTML = active_vote.voter + ' ' + active_vote.percent/100 + '% Send SBD Done ';
+           ul.appendChild(li);
+           }
+         });
+        });
+      }
+     });
+              });
+        });
+
+    </script>
+</head>
+<body>
+    <hr />
+
+    <div class="expandablerSendSBD">
+
+        <div>
+            Sender
+            <input type="text" id="txtUser" value="" style="width: 500px;" />
+        </div>
+        <div>
+            Sender Private Active/Owner Key
+            <input type="password" id="txtActiveKey" value="" style="width: 500px;" />
+        </div>
+        <div>
+            URL
+            <input type="text" id="txtSBDURL" value="" style="width: 500px;" />
+        </div>
+        <div>
+            SBD AMOUNT
+            <input type="text" id="txtSBDAmount" style="width: 200px;" />
+        </div>
+        <div>
+            <input id="btnSendSBD" type="button" value="Send SBD To ALL Voters" />
+        </div>
+    </div>
+    <hr />
+    <ul id="result"></ul>
+
+
+</body>
+</html> 
